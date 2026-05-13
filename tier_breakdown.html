@@ -47,7 +47,7 @@
 </head>
 <body>
 <div class="container">
-  <a class="back" href="index.html">&larr; Back to Trend Chart</a>
+  <a class="back" href="exclusive_locations_chart.html">&larr; Back to Trend Chart</a>
   <h1 style="margin-top:12px">GMB Exclusivity by Tier</h1>
   <p class="subtitle">Exclusive = only Sauce as delivery provider on Google Business Profile &middot; May 13, 2026</p>
 
@@ -97,6 +97,7 @@
             <th data-col="daily_avg" data-type="num">Avg Daily Orders <span class="sort-arrow">▲▼</span></th>
             <th data-col="l30d" data-type="num">L30D Orders <span class="sort-arrow">▲▼</span></th>
             <th data-col="cs_owner">CS Owner <span class="sort-arrow">▲▼</span></th>
+            <th data-col="provider_count" data-type="num"># Providers <span class="sort-arrow">▲▼</span></th>
             <th data-col="providers">GMB Providers <span class="sort-arrow">▲▼</span></th>
           </tr>
         </thead>
@@ -124,6 +125,7 @@
             <th data-col="daily_avg" data-type="num">Avg Daily Orders <span class="sort-arrow">▲▼</span></th>
             <th data-col="l30d" data-type="num">L30D Orders <span class="sort-arrow">▲▼</span></th>
             <th data-col="cs_owner">CS Owner <span class="sort-arrow">▲▼</span></th>
+            <th data-col="provider_count" data-type="num"># Providers <span class="sort-arrow">▲▼</span></th>
             <th data-col="providers">GMB Providers <span class="sort-arrow">▲▼</span></th>
           </tr>
         </thead>
@@ -521,20 +523,28 @@ function renderTable(tableId, data, searchId, countId) {
         r.tier.toLowerCase().includes(q)
       );
     }
+    const getVal = (r, col) => {
+      if (col === 'provider_count') return r.providers === '(none found)' ? 0 : r.providers.split(', ').length;
+      return r[col];
+    };
     filtered.sort((a, b) => {
-      const va = a[sortCol], vb = b[sortCol];
+      const va = getVal(a, sortCol), vb = getVal(b, sortCol);
       if (typeof va === 'number') return (va - vb) * sortDir;
       return String(va).localeCompare(String(vb)) * sortDir;
     });
     countEl.textContent = `Showing ${filtered.length} of ${data.length} locations`;
-    tbody.innerHTML = filtered.map(r => `<tr>
+    tbody.innerHTML = filtered.map(r => {
+      const pc = r.providers === '(none found)' ? 0 : r.providers.split(', ').length;
+      return `<tr>
       <td><strong>${r.name}</strong></td>
       <td>${r.tier}</td>
       <td>${r.daily_avg}</td>
       <td>${r.l30d.toLocaleString()}</td>
       <td>${r.cs_owner}</td>
+      <td style="text-align:center">${pc}</td>
       <td class="providers-cell">${renderProviders(r.providers)}</td>
-    </tr>`).join('');
+    </tr>`;
+    }).join('');
   }
 
   searchEl.addEventListener('input', () => render(searchEl.value));
