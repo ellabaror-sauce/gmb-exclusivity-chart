@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMB Exclusivity by Tier</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 24px; background: #f8f9fa; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { color: #1a1a2e; font-size: 22px; margin-bottom: 4px; }
+  .subtitle { color: #6c757d; font-size: 14px; margin-bottom: 24px; }
+  a.back { color: #4361ee; text-decoration: none; font-size: 13px; }
+  a.back:hover { text-decoration: underline; }
+  .stats-row { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat-card { flex: 1; min-width: 140px; background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .stat-label { font-size: 12px; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 28px; font-weight: 700; color: #1a1a2e; margin-top: 4px; }
+  .stat-detail { font-size: 12px; color: #6c757d; margin-top: 2px; }
+  .chart-wrapper { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .chart-title { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 16px; }
+  canvas { max-height: 340px; }
+  .section { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+  .section-title { font-size: 16px; font-weight: 600; color: #333; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  .badge-red { background: #fce4ec; color: #c62828; }
+  .badge-green { background: #e8f5e9; color: #2e7d32; }
+  .search-box { padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px; width: 220px; }
+  .search-box:focus { outline: none; border-color: #4361ee; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; border-bottom: 2px solid #dee2e6; color: #495057; font-weight: 600; cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: #1a1a2e; }
+  th .sort-arrow { font-size: 10px; margin-left: 4px; color: #adb5bd; }
+  th.sorted .sort-arrow { color: #4361ee; }
+  td { padding: 8px 12px; border-bottom: 1px solid #f1f3f5; }
+  tr:hover td { background: #f8f9fa; }
+  .providers-cell { max-width: 280px; }
+  .provider-tag { display: inline-block; padding: 1px 6px; margin: 1px 2px; border-radius: 3px; font-size: 11px; background: #e9ecef; color: #495057; }
+  .provider-tag.sauce { background: #e3f2fd; color: #1565c0; font-weight: 600; }
+  .provider-tag.major { background: #fff3e0; color: #e65100; }
+  .provider-tag.none { background: #f5f5f5; color: #9e9e9e; font-style: italic; }
+  .note { color: #6c757d; font-size: 12px; margin-top: 12px; line-height: 1.6; }
+  .count-label { font-size: 13px; color: #6c757d; }
+  .table-scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back" href="index.html">&larr; Back to Trend Chart</a>
+  <h1 style="margin-top:12px">GMB Exclusivity by Tier</h1>
+  <p class="subtitle">Exclusive = only Sauce as delivery provider on Google Business Profile &middot; May 13, 2026</p>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">T1 [10+ orders/day]</div>
+      <div class="stat-value" style="color:#1565c0">27.5%</div>
+      <div class="stat-detail">44 of 160 exclusive</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">T2 [5-10 orders/day]</div>
+      <div class="stat-value" style="color:#4361ee">23.2%</div>
+      <div class="stat-detail">60 of 259 exclusive</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">T3 [3-5 orders/day]</div>
+      <div class="stat-value" style="color:#7c4dff">16.4%</div>
+      <div class="stat-detail">39 of 238 exclusive</div>
+    </div>
+    <div class="stat-card" style="border: 2px solid #1a1a2e;">
+      <div class="stat-label">T1 + T2 + T3 Combined</div>
+      <div class="stat-value">21.8%</div>
+      <div class="stat-detail">143 of 657 exclusive</div>
+    </div>
+  </div>
+
+  <div class="chart-wrapper">
+    <div class="chart-title">Exclusivity Rate by Tier</div>
+    <canvas id="tierChart"></canvas>
+  </div>
+
+  <!-- Non-Exclusive T1 Table -->
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <span class="section-title">Non-Exclusive T1 Locations</span>
+        <span class="badge badge-red">116 locations</span>
+      </div>
+      <input type="text" class="search-box" id="searchT1" placeholder="Search name, owner, provider...">
+    </div>
+    <div class="table-scroll">
+      <table id="tableT1">
+        <thead>
+          <tr>
+            <th data-col="name">Location <span class="sort-arrow">▲▼</span></th>
+            <th data-col="tier">Current Tier <span class="sort-arrow">▲▼</span></th>
+            <th data-col="daily_avg" data-type="num">Avg Daily Orders <span class="sort-arrow">▲▼</span></th>
+            <th data-col="l30d" data-type="num">L30D Orders <span class="sort-arrow">▲▼</span></th>
+            <th data-col="cs_owner">CS Owner <span class="sort-arrow">▲▼</span></th>
+            <th data-col="providers">GMB Providers <span class="sort-arrow">▲▼</span></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="count-label" id="countT1"></div>
+  </div>
+
+  <!-- Non-Exclusive T2 Table -->
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <span class="section-title">Non-Exclusive T2 Locations</span>
+        <span class="badge badge-red">199 locations</span>
+      </div>
+      <input type="text" class="search-box" id="searchT2" placeholder="Search name, owner, provider...">
+    </div>
+    <div class="table-scroll">
+      <table id="tableT2">
+        <thead>
+          <tr>
+            <th data-col="name">Location <span class="sort-arrow">▲▼</span></th>
+            <th data-col="tier">Current Tier <span class="sort-arrow">▲▼</span></th>
+            <th data-col="daily_avg" data-type="num">Avg Daily Orders <span class="sort-arrow">▲▼</span></th>
+            <th data-col="l30d" data-type="num">L30D Orders <span class="sort-arrow">▲▼</span></th>
+            <th data-col="cs_owner">CS Owner <span class="sort-arrow">▲▼</span></th>
+            <th data-col="providers">GMB Providers <span class="sort-arrow">▲▼</span></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="count-label" id="countT2"></div>
+  </div>
+
+  <div class="note">
+    Source: GMB scraping events log (latest scrape per location) joined with location_stats_v2<br>
+    Highest tier used for tier classification &middot; Current tier shown in table &middot; Updated May 13, 2026<br>
+    "(none found)" = no providers detected on GMB page during scrape
+  </div>
+</div>
+
+<script>
+const majorProviders = ['UberEats','DoorDash','Grubhub','Seamless','Postmates','Caviar'];
+
+const t1Data = [
+  {name:"JPs Bagel Express",tier:"T1 [10+)",daily_avg:74.2,l30d:2164,cs_owner:"Noy Shavit",providers:"Sauce, Direct Order"},
+  {name:"Schnitzel Plus",tier:"T1 [10+)",daily_avg:40.7,l30d:1232,cs_owner:"Anthony Castagnaro",providers:"(none found)"},
+  {name:"Wu And Nussbaum",tier:"T1 [10+)",daily_avg:40.2,l30d:1194,cs_owner:"Noy Shavit",providers:"Grubhub, Seamless, Sauce, Direct Order"},
+  {name:"Pisillo Italian Panini",tier:"T1 [10+)",daily_avg:31.0,l30d:928,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, Seamless, Sauce, Postmates, Direct Order"},
+  {name:"Hutch And Waldo - Upper East Side",tier:"T1 [10+)",daily_avg:30.6,l30d:897,cs_owner:"Dana Blau",providers:"Direct Order"},
+  {name:"Warude Bedstuy",tier:"T1 [10+)",daily_avg:28.7,l30d:861,cs_owner:"Brian Kessler",providers:"(none found)"},
+  {name:"Blue Cactus Grill",tier:"T1 [10+)",daily_avg:27.8,l30d:820,cs_owner:"Anthony Castagnaro",providers:"UberEats, DoorDash, Sauce, Postmates"},
+  {name:"Smash House (5 Towns)",tier:"T1 [10+)",daily_avg:27.8,l30d:861,cs_owner:"Anthony Castagnaro",providers:"UberEats, Sauce, Postmates, Toast Local, Direct Order"},
+  {name:"Kossars Bagels And Bialys - UWS",tier:"T1 [10+)",daily_avg:25.8,l30d:745,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"BOs Bagels - Harlem",tier:"T1 [10+)",daily_avg:24.6,l30d:703,cs_owner:"Noy Shavit",providers:"UberEats, Sauce, Postmates, Toast Local"},
+  {name:"Aces Pizza Williamsburg",tier:"T1 [10+)",daily_avg:23.5,l30d:680,cs_owner:"Brian Kessler",providers:"(none found)"},
+  {name:"Food For Thought Garden City",tier:"T1 [10+)",daily_avg:23.4,l30d:701,cs_owner:"Brian Kessler",providers:"Grubhub, DoorDash, Seamless, Sauce, Caviar"},
+  {name:"Hutch And Waldo - Gramercy",tier:"T1 [10+)",daily_avg:23.4,l30d:685,cs_owner:"Dana Blau",providers:"Direct Order"},
+  {name:"Super Pollo",tier:"T1 [10+)",daily_avg:22.9,l30d:684,cs_owner:"Mariana Fonseca",providers:"Grubhub, DoorDash, Seamless, Sauce, Menufy, Caviar, ActiveMenus, Direct Order"},
+  {name:"Smash House Brooklyn",tier:"T1 [10+)",daily_avg:22.2,l30d:660,cs_owner:"Anthony Castagnaro",providers:"UberEats, Grubhub, Seamless, Sauce, Postmates"},
+  {name:"Cafe DeMi",tier:"T1 [10+)",daily_avg:22.0,l30d:664,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, Seamless, Sauce, Postmates, Direct Order"},
+  {name:"Poke Bowl Lexington",tier:"T1 [10+)",daily_avg:21.9,l30d:668,cs_owner:"Noy Shavit",providers:"Sauce, Caviar"},
+  {name:"Court Square Diner",tier:"T1 [10+)",daily_avg:21.8,l30d:651,cs_owner:"Brian Kessler",providers:"Grubhub, Seamless, Sauce"},
+  {name:"Killer Pizza",tier:"T1 [10+)",daily_avg:20.2,l30d:574,cs_owner:"Dana Blau",providers:"DoorDash, Sauce, Order Clover, Direct Order"},
+  {name:"Smash House Boca",tier:"T1 [10+)",daily_avg:18.7,l30d:576,cs_owner:"Anthony Castagnaro",providers:"UberEats, Sauce, Postmates"},
+  {name:"Bite Club",tier:"T1 [10+)",daily_avg:16.2,l30d:467,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, Seamless, Sauce, Postmates, SpotOn, Direct Order"},
+  {name:"Smash House Burgers Queens",tier:"T1 [10+)",daily_avg:15.8,l30d:495,cs_owner:"Anthony Castagnaro",providers:"Sauce, Toast Local"},
+  {name:"Ly Ly Vietnam Cookhouse",tier:"T1 [10+)",daily_avg:15.6,l30d:454,cs_owner:"Terrence Charles",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Wings Plus Sample Road",tier:"T1 [10+)",daily_avg:15.4,l30d:452,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce, Toast Local, Delivrd"},
+  {name:"Friedmans Battery Park",tier:"T1 [10+)",daily_avg:15.2,l30d:452,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Ritual, Postmates, Caviar"},
+  {name:"3:33 Burgers",tier:"T1 [10+)",daily_avg:14.0,l30d:411,cs_owner:"Tomas Sarmiento",providers:"(none found)"},
+  {name:"Milk N Honey",tier:"T1 [10+)",daily_avg:13.8,l30d:441,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar, Foodhub"},
+  {name:"Shelskys Of Brooklyn Court St",tier:"T1 [10+)",daily_avg:13.6,l30d:392,cs_owner:"Noy Shavit",providers:"UberEats, DoorDash, Sauce, Postmates"},
+  {name:"Marinara Pizza Midtown",tier:"T1 [10+)",daily_avg:13.5,l30d:396,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar, Direct Order"},
+  {name:"5 Boroughs Pizza",tier:"T1 [10+)",daily_avg:13.1,l30d:381,cs_owner:"Tomas Sarmiento",providers:"DoorDash, Sauce"},
+  {name:"Grill Point Lexington",tier:"T1 [10+)",daily_avg:12.4,l30d:377,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Marinara Pizza Greenvale",tier:"T1 [10+)",daily_avg:12.4,l30d:367,cs_owner:"Noy Shavit",providers:"UberEats, Slice, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"Cuban Guys - Hialeah Gardens",tier:"T1 [10+)",daily_avg:12.2,l30d:362,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Fat Boys Burgers - Hells Kitchen",tier:"T1 [10+)",daily_avg:11.9,l30d:350,cs_owner:"Terrence Charles",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Aces Pizza Rockefeller Center",tier:"T1 [10+)",daily_avg:11.8,l30d:355,cs_owner:"Brian Kessler",providers:"Grubhub, Seamless, Sauce, Toast Local"},
+  {name:"Mendys NYC",tier:"T1 [10+)",daily_avg:11.8,l30d:371,cs_owner:"Madalyn Rubenstein",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar, ActiveMenus"},
+  {name:"Holy Smoke And Vape Shop",tier:"T1 [10+)",daily_avg:11.8,l30d:351,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Marinara Pizza Upper East Side",tier:"T1 [10+)",daily_avg:11.6,l30d:341,cs_owner:"Noy Shavit",providers:"DoorDash, Sauce, Direct Order"},
+  {name:"Miznon Kosher",tier:"T1 [10+)",daily_avg:11.6,l30d:371,cs_owner:"Noy Shavit",providers:"UberEats, DoorDash, Sauce, Postmates, Caviar"},
+  {name:"Chifa Du Kang Miramar",tier:"T1 [10+)",daily_avg:11.6,l30d:333,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Ricotta - Kosher Pizza And Bakery",tier:"T1 [10+)",daily_avg:11.4,l30d:354,cs_owner:"Dana Blau",providers:"Sauce, Order Clover"},
+  {name:"Marinara Pizza 379 Park Ave",tier:"T1 [10+)",daily_avg:11.1,l30d:331,cs_owner:"Noy Shavit",providers:"DoorDash, Sauce, Direct Order"},
+  {name:"Community Food And Juice",tier:"T1 [10+)",daily_avg:11.1,l30d:336,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar, Toast Local"},
+  {name:"Montclair - Dutch’s Sandwich Shop",tier:"T1 [10+)",daily_avg:10.9,l30d:315,cs_owner:"Brian Kessler",providers:"DoorDash, Sauce, Direct Order"},
+  {name:"Smash House Monsey - Frisch",tier:"T1 [10+)",daily_avg:10.9,l30d:304,cs_owner:"Anthony Castagnaro",providers:"UberEats, Sauce, Postmates"},
+  {name:"Cuban Guys - Kendall",tier:"T1 [10+)",daily_avg:10.7,l30d:311,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Fish Grill - Lakewood",tier:"T1 [10+)",daily_avg:10.2,l30d:323,cs_owner:"Noy Shavit",providers:"Sauce, Toast Local"},
+  {name:"Bigger Mamas Copiague",tier:"T1 [10+)",daily_avg:10.2,l30d:294,cs_owner:"Brian Kessler",providers:"UberEats, Sauce, Postmates"},
+  {name:"Marinara Pizza Upper West Side",tier:"T1 [10+)",daily_avg:10.1,l30d:294,cs_owner:"Noy Shavit",providers:"Sauce, Direct Order"},
+  {name:"The Fresh Carrot - Surfside",tier:"T1 [10+)",daily_avg:10.0,l30d:311,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce"},
+  {name:"Wings Plus Ramblewood Drive",tier:"T2 [5-10)",daily_avg:10.0,l30d:291,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce"},
+  {name:"Nandos Mexican Cafe Mesa",tier:"T2 [5-10)",daily_avg:9.9,l30d:294,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Cuban Guys - Miramar",tier:"T2 [5-10)",daily_avg:9.9,l30d:300,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Sushi Ren",tier:"T2 [5-10)",daily_avg:9.8,l30d:283,cs_owner:"Terrence Charles",providers:"DoorDash, Sauce, ActiveMenus"},
+  {name:"The Bagel Barn Cafe & Deli",tier:"T2 [5-10)",daily_avg:9.6,l30d:285,cs_owner:"Anthony Castagnaro",providers:"Grubhub, DoorDash, Seamless, Sauce, Toast Local"},
+  {name:"Suram - Sushi And Ramen Upper West Side",tier:"T2 [5-10)",daily_avg:9.6,l30d:287,cs_owner:"Noy Shavit",providers:"Sauce, Caviar"},
+  {name:"El Tambo Grill Sunset",tier:"T2 [5-10)",daily_avg:9.6,l30d:281,cs_owner:"Dana Blau",providers:"UberEats, Sauce"},
+  {name:"PANNA Weston Road",tier:"T2 [5-10)",daily_avg:9.4,l30d:280,cs_owner:"Dana Blau",providers:"Sauce, Direct Order"},
+  {name:"Ishtabach",tier:"T2 [5-10)",daily_avg:9.1,l30d:276,cs_owner:"Dana Blau",providers:"DoorDash, Sauce, Direct Order"},
+  {name:"Jerkies",tier:"T2 [5-10)",daily_avg:9.1,l30d:273,cs_owner:"Brian Kessler",providers:"DoorDash, Sauce"},
+  {name:"Sabas Pizza - Upper West Side",tier:"T2 [5-10)",daily_avg:8.9,l30d:264,cs_owner:"Noy Shavit",providers:"(none found)"},
+  {name:"Poke Bowl 127 Fulton",tier:"T2 [5-10)",daily_avg:8.8,l30d:270,cs_owner:"Noy Shavit",providers:"Sauce, Caviar"},
+  {name:"Nandos Mexican Cafe Queen Creek",tier:"T2 [5-10)",daily_avg:8.8,l30d:260,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce"},
+  {name:"Holy Schnitzel Crown Heights",tier:"T2 [5-10)",daily_avg:8.7,l30d:262,cs_owner:"Noy Shavit",providers:"UberEats, Sauce, Postmates, Toast Local"},
+  {name:"Friedmans - 31st St",tier:"T2 [5-10)",daily_avg:8.6,l30d:275,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Poke Bowl Madison",tier:"T2 [5-10)",daily_avg:8.6,l30d:271,cs_owner:"Noy Shavit",providers:"Sauce, Caviar"},
+  {name:"Sushi House",tier:"T2 [5-10)",daily_avg:8.5,l30d:260,cs_owner:"Dana Blau",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Miss Wonton",tier:"T2 [5-10)",daily_avg:8.5,l30d:254,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"Rocco Pizza",tier:"T2 [5-10)",daily_avg:8.4,l30d:249,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Pacific Kosher Restaurant",tier:"T2 [5-10)",daily_avg:8.4,l30d:252,cs_owner:"Anthony Castagnaro",providers:"Sauce, Order Clover, Direct Order"},
+  {name:"Kepshuto",tier:"T2 [5-10)",daily_avg:8.2,l30d:256,cs_owner:"Dana Blau",providers:"UberEats, Sauce, Postmates, Direct Order"},
+  {name:"Village Bagel Company",tier:"T2 [5-10)",daily_avg:8.1,l30d:235,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Nish Nush 88 Reade Street",tier:"T2 [5-10)",daily_avg:8.1,l30d:251,cs_owner:"Noy Shavit",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Curry Leaves Indian Cuisine",tier:"T2 [5-10)",daily_avg:7.9,l30d:229,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce"},
+  {name:"Parrish Pizzeria",tier:"T2 [5-10)",daily_avg:7.6,l30d:217,cs_owner:"Dana Blau",providers:"UberEats, DoorDash, Sauce, Postmates"},
+  {name:"Scarr’s Pizza",tier:"T2 [5-10)",daily_avg:7.6,l30d:223,cs_owner:"Mariana Fonseca",providers:"Square, Sauce"},
+  {name:"BOs Bagels Washington Heights",tier:"T2 [5-10)",daily_avg:7.5,l30d:218,cs_owner:"Noy Shavit",providers:"(none found)"},
+  {name:"Pelicana Chicken - NY Forest Hills",tier:"T2 [5-10)",daily_avg:7.4,l30d:218,cs_owner:"Noy Shavit",providers:"UberEats, DoorDash, Sauce, Postmates"},
+  {name:"Central Perk Cafe",tier:"T2 [5-10)",daily_avg:7.3,l30d:227,cs_owner:"no info",providers:"DoorDash, Sauce"},
+  {name:"Poke Bowl 80 Broad St",tier:"T2 [5-10)",daily_avg:7.0,l30d:222,cs_owner:"Noy Shavit",providers:"Sauce, Caviar"},
+  {name:"Nandos Mexican Cafe Maricopa",tier:"T2 [5-10)",daily_avg:6.9,l30d:199,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce"},
+  {name:"Shanghai 18 Kosher",tier:"T2 [5-10)",daily_avg:6.6,l30d:199,cs_owner:"Noy Shavit",providers:"(none found)"},
+  {name:"Renzos Cafe And Pizzeria",tier:"T2 [5-10)",daily_avg:6.6,l30d:201,cs_owner:"Dana Blau",providers:"DoorDash, Sauce, Direct Order"},
+  {name:"Shelskys Brooklyn Bagels 4th Ave",tier:"T2 [5-10)",daily_avg:6.4,l30d:186,cs_owner:"Noy Shavit",providers:"UberEats, Sauce, Postmates"},
+  {name:"Baji Baji",tier:"T2 [5-10)",daily_avg:6.2,l30d:176,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"Cuban Guys - Palmetto Bay",tier:"T2 [5-10)",daily_avg:6.1,l30d:178,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Herbachi Asian Fusion Grill",tier:"T2 [5-10)",daily_avg:6.0,l30d:170,cs_owner:"Jim Bayraktar",providers:"DoorDash, Sauce"},
+  {name:"Chevre Miami",tier:"T2 [5-10)",daily_avg:6.0,l30d:173,cs_owner:"Dana Blau",providers:"(none found)"},
+  {name:"Pelicana Chicken - NY Plainview",tier:"T2 [5-10)",daily_avg:5.7,l30d:165,cs_owner:"Noy Shavit",providers:"UberEats, DoorDash, Sauce, Postmates, Caviar"},
+  {name:"Pisillo Italian Panini - Times Square",tier:"T2 [5-10)",daily_avg:5.4,l30d:168,cs_owner:"Brian Kessler",providers:"UberEats, Sauce, Postmates"},
+  {name:"Pelicana Chicken - NY Bayside",tier:"T2 [5-10)",daily_avg:5.3,l30d:159,cs_owner:"Noy Shavit",providers:"DoorDash, Sauce"},
+  {name:"Miznon Chelsea Market",tier:"T2 [5-10)",daily_avg:5.1,l30d:156,cs_owner:"Noy Shavit",providers:"UberEats, DoorDash, Sauce, Postmates, Caviar"},
+  {name:"Bambu Kosher Boca Raton",tier:"T2 [5-10)",daily_avg:5.0,l30d:150,cs_owner:"Dana Blau",providers:"UberEats, Grubhub, Seamless, Sauce, Postmates, SpotOn, Direct Order"},
+  {name:"Miznon Hugh",tier:"T3 [3-5)",daily_avg:4.8,l30d:147,cs_owner:"Noy Shavit",providers:"UberEats, Sauce, Postmates"},
+  {name:"Roast",tier:"T3 [3-5)",daily_avg:4.5,l30d:142,cs_owner:"Dana Blau",providers:"(none found)"},
+  {name:"Bloomingdale Pizza Valrico",tier:"T3 [3-5)",daily_avg:4.5,l30d:129,cs_owner:"Mariana Fonseca",providers:"DoorDash, Sauce"},
+  {name:"Smash House Burgers 47th",tier:"T3 [3-5)",daily_avg:4.3,l30d:134,cs_owner:"Anthony Castagnaro",providers:"UberEats, Sauce, Postmates"},
+  {name:"Jojos NY Style Pizza Hollywood",tier:"T3 [3-5)",daily_avg:4.2,l30d:125,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce, ActiveMenus, Direct Order"},
+  {name:"Munch Street Food",tier:"T3 [3-5)",daily_avg:4.0,l30d:117,cs_owner:"Anthony Castagnaro",providers:"Sauce, Order Clover"},
+  {name:"Mordisco Miami",tier:"T3 [3-5)",daily_avg:4.0,l30d:117,cs_owner:"Mariana Fonseca",providers:"UberEats, Sauce, Postmates"},
+  {name:"Sauteed",tier:"T3 [3-5)",daily_avg:3.6,l30d:113,cs_owner:"Dana Blau",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Redlands Ramen",tier:"T3 [3-5)",daily_avg:3.3,l30d:97,cs_owner:"Mariana Fonseca",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"West Wing",tier:"T4 [1-3)",daily_avg:2.8,l30d:85,cs_owner:"Dana Blau",providers:"UberEats, Sauce, Postmates"},
+  {name:"Mikonos Grill",tier:"T4 [1-3)",daily_avg:2.7,l30d:85,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Shokku Ramen - Las Vegas",tier:"T4 [1-3)",daily_avg:1.9,l30d:57,cs_owner:"Mariana Fonseca",providers:"DoorDash, Sauce, Order Clover, Direct Order"},
+  {name:"The Special Cup",tier:"T4 [1-3)",daily_avg:1.5,l30d:44,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, ChowNow, Caviar"},
+  {name:"Luna",tier:"T4 [1-3)",daily_avg:1.2,l30d:43,cs_owner:"Dana Blau",providers:"(none found)"},
+  {name:"Sarges Delicatessen And Diner",tier:"T4 [1-3)",daily_avg:1.2,l30d:36,cs_owner:"Madalyn Rubenstein",providers:"DoorDash, Sauce, Caviar, Toast Local"},
+  {name:"Fresko",tier:"T4 [1-3)",daily_avg:1.2,l30d:38,cs_owner:"Anthony Castagnaro",providers:"Sauce, Toast Local"},
+  {name:"Taikin Asian Cuisine",tier:"T4 [1-3)",daily_avg:1.0,l30d:33,cs_owner:"Brian Kessler",providers:"DoorDash, Sauce"},
+  {name:"Chifa Du Kang Kendall Drive",tier:"T5 (0-1)",daily_avg:0.7,l30d:21,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Very Juice Lakewood",tier:"T5 (0-1)",daily_avg:0.6,l30d:26,cs_owner:"Noy Shavit",providers:"(none found)"},
+  {name:"Burgers And Grill",tier:"T5 (0-1)",daily_avg:0.6,l30d:20,cs_owner:"Noy Shavit",providers:"Grubhub, Sauce"},
+  {name:"Slices of Oakhurst NJ",tier:"T5 (0-1)",daily_avg:0.2,l30d:6,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, ChowNow, Direct Order"},
+  {name:"Pressed Elite Sandwich Bar",tier:"T5 (0-1)",daily_avg:0.1,l30d:2,cs_owner:"Dana Blau",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Order Clover, Direct Order"},
+  {name:"Locust Avenue Deli",tier:"T5 (0-1)",daily_avg:0.0,l30d:1,cs_owner:"Dana Blau",providers:"(none found)"},
+];
+
+const t2Data = [
+  {name:"Keste Pizza E Vino - Fulton St",tier:"T2 [5-10)",daily_avg:9.7,l30d:278,cs_owner:"Brian Kessler",providers:"UberEats, DoorDash, Sauce, Postmates, ChowNow, Toast Local"},
+  {name:"Holy Smoke And Vape Shop - Port Charlotte",tier:"T2 [5-10)",daily_avg:9.6,l30d:283,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Cha Pas Noodles And Grill",tier:"T2 [5-10)",daily_avg:9.2,l30d:272,cs_owner:"Terrence Charles",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar, Direct Order"},
+  {name:"Cangianos Marketplace",tier:"T2 [5-10)",daily_avg:9.1,l30d:268,cs_owner:"Tomas Sarmiento",providers:"UberEats, DoorDash, Sauce, Postmates"},
+  {name:"Wangs",tier:"T2 [5-10)",daily_avg:9.0,l30d:261,cs_owner:"Brian Kessler",providers:"Grubhub, Sauce, ActiveMenus"},
+  {name:"Clifton Thai Restaurant",tier:"T2 [5-10)",daily_avg:8.8,l30d:257,cs_owner:"Madalyn Rubenstein",providers:"Grubhub, DoorDash, Seamless, Sauce, Caviar, Direct Order"},
+  {name:"Lisas Italian Deli And Caterer",tier:"T2 [5-10)",daily_avg:8.7,l30d:258,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Menufy, ActiveMenus, Direct Order"},
+  {name:"Rua Thai",tier:"T2 [5-10)",daily_avg:8.2,l30d:235,cs_owner:"Brian Kessler",providers:"(none found)"},
+  {name:"Osaka Sushi NYC",tier:"T2 [5-10)",daily_avg:8.1,l30d:253,cs_owner:"Terrence Charles",providers:"DoorDash, Square, Sauce, Direct Order"},
+  {name:"Disalvos Pizza Italian Restaurant Hollywood",tier:"T2 [5-10)",daily_avg:8.0,l30d:233,cs_owner:"Anthony Castagnaro",providers:"UberEats, Sauce, Postmates"},
+  {name:"Westway Diner",tier:"T2 [5-10)",daily_avg:7.9,l30d:231,cs_owner:"Brian Kessler",providers:"Sauce, Direct Order"},
+  {name:"Smash House 37th",tier:"T2 [5-10)",daily_avg:7.8,l30d:236,cs_owner:"Anthony Castagnaro",providers:"UberEats, Sauce, Postmates"},
+  {name:"Nom Nam Vietnamese Kitchen",tier:"T2 [5-10)",daily_avg:7.8,l30d:235,cs_owner:"Terrence Charles",providers:"HungryPanda, UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Fantuan, Toast Local"},
+  {name:"Gotan TriBeCa",tier:"T2 [5-10)",daily_avg:7.8,l30d:234,cs_owner:"Madalyn Rubenstein",providers:"Sauce, Direct Order"},
+  {name:"Willys Bloomingdale Pizza Brandon",tier:"T2 [5-10)",daily_avg:7.8,l30d:223,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Big Louies Pizzeria Sunrise",tier:"T2 [5-10)",daily_avg:7.8,l30d:229,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Soho Sushi",tier:"T2 [5-10)",daily_avg:7.4,l30d:218,cs_owner:"Terrence Charles",providers:"(none found)"},
+  {name:"Sabas Pizza - Upper East Side",tier:"T2 [5-10)",daily_avg:7.3,l30d:206,cs_owner:"Noy Shavit",providers:"UberEats, Slice, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar, ActiveMenus, Direct Order"},
+  {name:"Metro Diner",tier:"T2 [5-10)",daily_avg:7.2,l30d:221,cs_owner:"Brian Kessler",providers:"Sauce, ActiveMenus"},
+  {name:"Poke Bowl 11 Park PI",tier:"T2 [5-10)",daily_avg:7.2,l30d:223,cs_owner:"Noy Shavit",providers:"Sauce, Caviar"},
+  {name:"Poke Bowl 39th St",tier:"T2 [5-10)",daily_avg:7.2,l30d:220,cs_owner:"Noy Shavit",providers:"Sauce, Ritual, Fantuan, ChowNow, BeyondMenu"},
+  {name:"Valentinos Pizzeria",tier:"T2 [5-10)",daily_avg:7.1,l30d:210,cs_owner:"Anthony Castagnaro",providers:"Slice, DoorDash, Sauce, Caviar, Direct Order"},
+  {name:"TPR Restaurant Pizzeria",tier:"T2 [5-10)",daily_avg:7.0,l30d:208,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar, Toast Local"},
+  {name:"Nicks Pizza",tier:"T2 [5-10)",daily_avg:6.8,l30d:198,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Stamna Taverna",tier:"T2 [5-10)",daily_avg:6.8,l30d:200,cs_owner:"Mariana Fonseca",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"Kossars - West End Ave",tier:"T2 [5-10)",daily_avg:6.7,l30d:195,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"Del Francos Pizza",tier:"T2 [5-10)",daily_avg:6.7,l30d:187,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Taco Lindo",tier:"T2 [5-10)",daily_avg:6.6,l30d:191,cs_owner:"Mariana Fonseca",providers:"DoorDash, Sauce"},
+  {name:"Yumm Sushi",tier:"T2 [5-10)",daily_avg:6.6,l30d:208,cs_owner:"Dana Blau",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Luccis Pizza",tier:"T2 [5-10)",daily_avg:6.6,l30d:192,cs_owner:"Anthony Castagnaro",providers:"UberEats, Slice, Grubhub, DoorDash, Seamless, Sauce, Postmates, Direct Order"},
+  {name:"District Saigon",tier:"T2 [5-10)",daily_avg:6.6,l30d:190,cs_owner:"Terrence Charles",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar, Toast Local"},
+  {name:"Aces Pizza Bushwick",tier:"T2 [5-10)",daily_avg:6.6,l30d:195,cs_owner:"Brian Kessler",providers:"Grubhub, Seamless, Sauce"},
+  {name:"Bocelli Modern Italian",tier:"T2 [5-10)",daily_avg:6.6,l30d:194,cs_owner:"Noy Shavit",providers:"DoorDash, Sauce"},
+  {name:"Batata",tier:"T2 [5-10)",daily_avg:6.5,l30d:192,cs_owner:"Dana Blau",providers:"Grubhub, DoorDash, Seamless, Sauce, Caviar, Direct Order"},
+  {name:"Gracie Mews Diner",tier:"T2 [5-10)",daily_avg:6.5,l30d:192,cs_owner:"Brian Kessler",providers:"Sauce, ChowNow"},
+  {name:"Bagels & Co Amsterdam",tier:"T2 [5-10)",daily_avg:6.5,l30d:193,cs_owner:"Brian Kessler",providers:"UberEats, DoorDash, Sauce, Postmates, ActiveMenus, Direct Order"},
+  {name:"Five Stars Thai Restaurant",tier:"T2 [5-10)",daily_avg:6.4,l30d:183,cs_owner:"Madalyn Rubenstein",providers:"Grubhub, DoorDash, Seamless, Sauce, Direct Order"},
+  {name:"Nandos Mexican Cafe Gilbert",tier:"T2 [5-10)",daily_avg:6.3,l30d:187,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce, Caviar"},
+  {name:"El Tambo Grill Kendall",tier:"T2 [5-10)",daily_avg:6.3,l30d:183,cs_owner:"Dana Blau",providers:"UberEats, Sauce, Postmates"},
+  {name:"Bagels & Co York",tier:"T2 [5-10)",daily_avg:6.3,l30d:195,cs_owner:"Brian Kessler",providers:"UberEats, Slice, Grubhub, DoorDash, Seamless, Sauce, Postmates, ChowNow, Caviar, ActiveMenus, Direct Order"},
+  {name:"Toco Grill",tier:"T2 [5-10)",daily_avg:6.2,l30d:198,cs_owner:"Mariana Fonseca",providers:"DoorDash, Sauce"},
+  {name:"Shokku Ramen Houston",tier:"T2 [5-10)",daily_avg:6.2,l30d:184,cs_owner:"Mariana Fonseca",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"BK Belly",tier:"T2 [5-10)",daily_avg:6.2,l30d:188,cs_owner:"Brian Kessler",providers:"(none found)"},
+  {name:"Fiesta On Main",tier:"T2 [5-10)",daily_avg:6.1,l30d:178,cs_owner:"Brian Kessler",providers:"Grubhub, Seamless, Sauce"},
+  {name:"KD46",tier:"T2 [5-10)",daily_avg:6.1,l30d:193,cs_owner:"Tomas Sarmiento",providers:"(none found)"},
+  {name:"Sakura Sushi And Omakase",tier:"T2 [5-10)",daily_avg:6.1,l30d:185,cs_owner:"Dana Blau",providers:"UberEats, DoorDash, Sauce, Postmates, Direct Order"},
+  {name:"Pelicana Chicken - PA State College",tier:"T2 [5-10)",daily_avg:6.1,l30d:179,cs_owner:"Noy Shavit",providers:"HungryPanda, UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Fantuan"},
+  {name:"Fish Grill - Pico",tier:"T2 [5-10)",daily_avg:6.0,l30d:190,cs_owner:"Noy Shavit",providers:"Sauce, Toast Local"},
+  {name:"Soulful kitchen by Thomasena’s",tier:"T2 [5-10)",daily_avg:5.9,l30d:71,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, Seamless, Sauce, Postmates"},
+  {name:"Sangam Fine Indian Cuisine",tier:"T2 [5-10)",daily_avg:5.9,l30d:175,cs_owner:"Brian Kessler",providers:"Grubhub, DoorDash, Seamless, Sauce, Toast Local, Direct Order"},
+  {name:"Vitos Gourmet Pizza Coral Springs",tier:"T2 [5-10)",daily_avg:5.8,l30d:171,cs_owner:"Anthony Castagnaro",providers:"Sauce, Menufy, Direct Order"},
+  {name:"Nandos Mexican Cafe Chandler",tier:"T2 [5-10)",daily_avg:5.8,l30d:166,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Chimichurri",tier:"T2 [5-10)",daily_avg:5.7,l30d:166,cs_owner:"Dana Blau",providers:"UberEats, Square, Sauce, Postmates"},
+  {name:"Tacos Del Barrio - Brooklyn",tier:"T2 [5-10)",daily_avg:5.6,l30d:161,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Olde Brooklyn Bagel Shoppe",tier:"T2 [5-10)",daily_avg:5.6,l30d:163,cs_owner:"Brian Kessler",providers:"(none found)"},
+  {name:"Hummus Kitchen UES",tier:"T2 [5-10)",daily_avg:5.6,l30d:157,cs_owner:"Terrence Charles",providers:"Grubhub, Seamless, Sauce"},
+  {name:"Morning Star Cafe",tier:"T2 [5-10)",daily_avg:5.6,l30d:168,cs_owner:"Brian Kessler",providers:"DoorDash, Sauce, ActiveMenus"},
+  {name:"Pizza Piez - South 17th",tier:"T2 [5-10)",daily_avg:5.6,l30d:164,cs_owner:"Anthony Castagnaro",providers:"(none found)"},
+  {name:"Crabbae Seafood Restaurant And Catering",tier:"T2 [5-10)",daily_avg:5.6,l30d:156,cs_owner:"Brian Kessler",providers:"UberEats, DoorDash, Sauce, Postmates, Menufy, Caviar"},
+  {name:"New York Roma Pizza Coconut Grove",tier:"T2 [5-10)",daily_avg:5.5,l30d:160,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Oles Fajitas - Supreme Mexican",tier:"T2 [5-10)",daily_avg:5.5,l30d:157,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Direct Order"},
+  {name:"Sunflower Kosher Asian Cuisine",tier:"T2 [5-10)",daily_avg:5.5,l30d:167,cs_owner:"Dana Blau",providers:"UberEats, Sauce, Postmates"},
+  {name:"Tacos Del Barrio - FiDi",tier:"T2 [5-10)",daily_avg:5.4,l30d:159,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Chifa Du Kang Doral",tier:"T2 [5-10)",daily_avg:5.4,l30d:155,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Hiro Maru Sushi",tier:"T2 [5-10)",daily_avg:5.4,l30d:153,cs_owner:"Dana Blau",providers:"Grubhub, DoorDash, Seamless, Sauce, Caviar"},
+  {name:"Poke Bowl 5th Ave",tier:"T2 [5-10)",daily_avg:5.4,l30d:164,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"Jus By Julie Teaneck",tier:"T2 [5-10)",daily_avg:5.3,l30d:155,cs_owner:"Anthony Castagnaro",providers:"UberEats, Sauce, Postmates"},
+  {name:"Elenas Cuban Restaurant",tier:"T2 [5-10)",daily_avg:5.2,l30d:164,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce"},
+  {name:"Wei West",tier:"T2 [5-10)",daily_avg:5.2,l30d:160,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Ritual, Postmates, Caviar"},
+  {name:"Sababa Grill",tier:"T2 [5-10)",daily_avg:5.1,l30d:151,cs_owner:"Noy Shavit",providers:"Grubhub, Seamless, Sauce"},
+  {name:"Cosa Nostra Italian Deli",tier:"T2 [5-10)",daily_avg:5.1,l30d:151,cs_owner:"Mariana Fonseca",providers:"UberEats, DoorDash, Sauce, Postmates, Toast Local"},
+  {name:"Holy Smoke And Vape Shop - Lehigh Acres",tier:"T2 [5-10)",daily_avg:5.1,l30d:149,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Jerk. Jamaican Barbecue",tier:"T2 [5-10)",daily_avg:5.1,l30d:146,cs_owner:"Tomas Sarmiento",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar, Toast Local"},
+  {name:"Top Notch Sushi",tier:"T2 [5-10)",daily_avg:5.1,l30d:151,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Miznon Hudson Yards",tier:"T2 [5-10)",daily_avg:5.1,l30d:155,cs_owner:"Noy Shavit",providers:"UberEats, DoorDash, Sauce, Postmates, Caviar"},
+  {name:"Fly High Smoke And Vape",tier:"T2 [5-10)",daily_avg:5.0,l30d:152,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Le Peep",tier:"T2 [5-10)",daily_avg:5.0,l30d:151,cs_owner:"Jim Bayraktar",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar, Toast Local, Direct Order"},
+  {name:"Fish Grill - Beverly",tier:"T2 [5-10)",daily_avg:5.0,l30d:162,cs_owner:"Noy Shavit",providers:"Sauce, Toast Local"},
+  {name:"Rosies Kosher Pizza",tier:"T3 [3-5)",daily_avg:5.0,l30d:149,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Beyond Smoke And Vape - Cape Coral",tier:"T3 [3-5)",daily_avg:5.0,l30d:149,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Lazy Bean Cafe",tier:"T3 [3-5)",daily_avg:5.0,l30d:150,cs_owner:"Mariana Fonseca",providers:"Sauce, Order Clover"},
+  {name:"Very Juice Great Neck",tier:"T3 [3-5)",daily_avg:5.0,l30d:150,cs_owner:"Noy Shavit",providers:"UberEats, Sauce, Postmates, Toast Local, Direct Order"},
+  {name:"Grill House",tier:"T3 [3-5)",daily_avg:4.8,l30d:155,cs_owner:"Terrence Charles",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Direct Order"},
+  {name:"Bergen Bagels",tier:"T3 [3-5)",daily_avg:4.8,l30d:142,cs_owner:"no info",providers:"(none found)"},
+  {name:"Bread and Spread",tier:"T3 [3-5)",daily_avg:4.8,l30d:137,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Super Pollo Brooklyn",tier:"T3 [3-5)",daily_avg:4.8,l30d:143,cs_owner:"Mariana Fonseca",providers:"DoorDash, Sauce, Menufy, Direct Order"},
+  {name:"El Tepeyac Taqueria 97 St",tier:"T3 [3-5)",daily_avg:4.8,l30d:141,cs_owner:"Jim Bayraktar",providers:"UberEats, Slice, Grubhub, DoorDash, Seamless, Sauce, Postmates, ActiveMenus"},
+  {name:"TORCH ZONE",tier:"T3 [3-5)",daily_avg:4.8,l30d:146,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Copper Indian Cuisine",tier:"T3 [3-5)",daily_avg:4.7,l30d:138,cs_owner:"Mariana Fonseca",providers:"UberEats, DoorDash, Sauce, Postmates, Toast Local"},
+  {name:"Frankie Feds",tier:"T3 [3-5)",daily_avg:4.7,l30d:131,cs_owner:"Noy Shavit",providers:"Slice, Sauce"},
+  {name:"Marinara Pizza 160 2nd Ave",tier:"T3 [3-5)",daily_avg:4.6,l30d:137,cs_owner:"Noy Shavit",providers:"UberEats, Slice, Grubhub, DoorDash, Seamless, Sauce, Ritual, Postmates, Caviar, Direct Order"},
+  {name:"Green Blend / Balanced Food / 8th ave",tier:"T3 [3-5)",daily_avg:4.6,l30d:141,cs_owner:"Madalyn Rubenstein",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Casa Louie",tier:"T3 [3-5)",daily_avg:4.6,l30d:133,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Bergen Bagels On Myrtle",tier:"T3 [3-5)",daily_avg:4.6,l30d:133,cs_owner:"Brian Kessler",providers:"(none found)"},
+  {name:"Sushi Metsuyan",tier:"T3 [3-5)",daily_avg:4.6,l30d:139,cs_owner:"Dana Blau",providers:"DoorDash, Sauce, Caviar"},
+  {name:"China Wah On",tier:"T3 [3-5)",daily_avg:4.5,l30d:134,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce, BeyondMenu, Direct Order"},
+  {name:"Bagel World Dekalb",tier:"T3 [3-5)",daily_avg:4.5,l30d:129,cs_owner:"Brian Kessler",providers:"UberEats, DoorDash, Sauce, Postmates, SpotOn"},
+  {name:"Holy Smoke And Vape Shop - Fort Myers",tier:"T3 [3-5)",daily_avg:4.5,l30d:135,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Miraj Healthy Grill Williston Park",tier:"T3 [3-5)",daily_avg:4.4,l30d:129,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Fish Grill - Brooklyn",tier:"T3 [3-5)",daily_avg:4.4,l30d:129,cs_owner:"Noy Shavit",providers:"Sauce, Toast Local"},
+  {name:"Zaffron Kitchen",tier:"T3 [3-5)",daily_avg:4.4,l30d:132,cs_owner:"Anthony Castagnaro",providers:"(none found)"},
+  {name:"NY Pizza Suprema",tier:"T3 [3-5)",daily_avg:4.4,l30d:129,cs_owner:"Terrence Charles",providers:"UberEats, Slice, Grubhub, Seamless, Sauce, Postmates, Direct Order"},
+  {name:"Shmash",tier:"T3 [3-5)",daily_avg:4.4,l30d:130,cs_owner:"Mariana Fonseca",providers:"UberEats, DoorDash, Sauce, Postmates"},
+  {name:"Babas Pierogies - Gowanus",tier:"T3 [3-5)",daily_avg:4.4,l30d:124,cs_owner:"Anthony Castagnaro",providers:"UberEats, DoorDash, Sauce, Postmates, Caviar"},
+  {name:"Mendelsohns Pizza",tier:"T3 [3-5)",daily_avg:4.4,l30d:135,cs_owner:"Noy Shavit",providers:"Grubhub, Seamless, Sauce"},
+  {name:"Pisillo Italian Panini - Chelsea",tier:"T3 [3-5)",daily_avg:4.4,l30d:130,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, Seamless, Sauce, Postmates, Direct Order"},
+  {name:"Big Louies Pizzeria Pompano Beach",tier:"T3 [3-5)",daily_avg:4.3,l30d:124,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce"},
+  {name:"Tu Sushi 305",tier:"T3 [3-5)",daily_avg:4.3,l30d:123,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Cloud 9Five4",tier:"T3 [3-5)",daily_avg:4.2,l30d:127,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"La Bagel Delight - Dumbo",tier:"T3 [3-5)",daily_avg:4.2,l30d:120,cs_owner:"Mariana Fonseca",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"Vitos And Son Italian Deli",tier:"T3 [3-5)",daily_avg:4.2,l30d:120,cs_owner:"Terrence Charles",providers:"Grubhub, DoorDash, Seamless, Sauce, Caviar"},
+  {name:"Miznon West 3rd St.",tier:"T3 [3-5)",daily_avg:4.2,l30d:127,cs_owner:"Mariana Fonseca",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Hasini Shel Broadway",tier:"T3 [3-5)",daily_avg:4.2,l30d:124,cs_owner:"Dana Blau",providers:"(none found)"},
+  {name:"Smacking Burger",tier:"T3 [3-5)",daily_avg:4.1,l30d:124,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Toast Local"},
+  {name:"Caffe Buon Gusto NYC",tier:"T3 [3-5)",daily_avg:4.1,l30d:120,cs_owner:"Brian Kessler",providers:"(none found)"},
+  {name:"Steves Pizza",tier:"T3 [3-5)",daily_avg:4.0,l30d:114,cs_owner:"Dana Blau",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar, Order Clover"},
+  {name:"Gs NY Pizza",tier:"T3 [3-5)",daily_avg:4.0,l30d:115,cs_owner:"Mariana Fonseca",providers:"Slice, Sauce"},
+  {name:"The Fat Lamb",tier:"T3 [3-5)",daily_avg:3.9,l30d:118,cs_owner:"Anthony Castagnaro",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"Chifa Du Kang Bird Road",tier:"T3 [3-5)",daily_avg:3.9,l30d:113,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"New York Roma Pizza Pinecrest",tier:"T3 [3-5)",daily_avg:3.8,l30d:110,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Bergen Bagels On Fulton",tier:"T3 [3-5)",daily_avg:3.8,l30d:109,cs_owner:"Brian Kessler",providers:"(none found)"},
+  {name:"Banzai Sushi And Hibachi Restaurant - Ironbound",tier:"T3 [3-5)",daily_avg:3.8,l30d:112,cs_owner:"Mariana Fonseca",providers:"Sauce, Caviar"},
+  {name:"Cuban Guys - Flagler",tier:"T3 [3-5)",daily_avg:3.7,l30d:107,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce"},
+  {name:"Poke Bowl Long Island City",tier:"T3 [3-5)",daily_avg:3.6,l30d:105,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Postmates, Fantuan, ActiveMenus, Toast Local, Direct Order"},
+  {name:"Sunflower Long Island",tier:"T3 [3-5)",daily_avg:3.6,l30d:106,cs_owner:"Brian Kessler",providers:"Sauce, Order Clover"},
+  {name:"PANNA Orlando",tier:"T3 [3-5)",daily_avg:3.5,l30d:109,cs_owner:"Dana Blau",providers:"Sauce, Direct Order"},
+  {name:"Pegasus Brooklyn",tier:"T3 [3-5)",daily_avg:3.5,l30d:101,cs_owner:"Brian Kessler",providers:"Grubhub, Seamless, Sauce"},
+  {name:"Collins Pizza",tier:"T3 [3-5)",daily_avg:3.5,l30d:102,cs_owner:"Noy Shavit",providers:"UberEats, Sauce"},
+  {name:"PitaBar NYC",tier:"T3 [3-5)",daily_avg:3.5,l30d:110,cs_owner:"Jim Bayraktar",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Munchys Pizza And Wings",tier:"T3 [3-5)",daily_avg:3.5,l30d:103,cs_owner:"Anthony Castagnaro",providers:"Slice, DoorDash, Sauce, FromTheRestaurant"},
+  {name:"Pj Bernstein",tier:"T3 [3-5)",daily_avg:3.4,l30d:100,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, ChowNow, ActiveMenus, Direct Order"},
+  {name:"SalgadosUSA",tier:"T3 [3-5)",daily_avg:3.4,l30d:103,cs_owner:"Mariana Fonseca",providers:"Sauce, Direct Order"},
+  {name:"Red Onion",tier:"T3 [3-5)",daily_avg:3.3,l30d:98,cs_owner:"Terrence Charles",providers:"Grubhub, DoorDash, Seamless, Sauce, ActiveMenus, Order Clover"},
+  {name:"Cappones Italian Sandwich Shop And Salumeria",tier:"T3 [3-5)",daily_avg:3.3,l30d:99,cs_owner:"Brian Kessler",providers:"Grubhub, DoorDash, Seamless, Sauce"},
+  {name:"Shawarma Mia",tier:"T3 [3-5)",daily_avg:3.2,l30d:90,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Mr Baguette - Wynwood",tier:"T3 [3-5)",daily_avg:3.2,l30d:97,cs_owner:"Anthony Castagnaro",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Rocco Pizza III",tier:"T3 [3-5)",daily_avg:3.2,l30d:95,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Gios Cuban Cafe",tier:"T3 [3-5)",daily_avg:3.2,l30d:94,cs_owner:"Mariana Fonseca",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Pelicana Chicken - MI Rochester Hills",tier:"T3 [3-5)",daily_avg:3.1,l30d:90,cs_owner:"Noy Shavit",providers:"UberEats, DoorDash, Sauce, Postmates, Caviar"},
+  {name:"Fortuna",tier:"T3 [3-5)",daily_avg:3.1,l30d:88,cs_owner:"Noy Shavit",providers:"UberEats, DoorDash, Sauce, Postmates, ActiveMenus"},
+  {name:"Queens NY Pizza",tier:"T3 [3-5)",daily_avg:3.0,l30d:88,cs_owner:"Brian Kessler",providers:"UberEats, Slice, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Shawarma Delight",tier:"T4 [1-3)",daily_avg:2.9,l30d:90,cs_owner:"Dana Blau",providers:"DoorDash, Sauce, Order Clover"},
+  {name:"Fialkoffs Kosher Pizza Miami Beach",tier:"T4 [1-3)",daily_avg:2.8,l30d:87,cs_owner:"Dana Blau",providers:"Sauce, Order Clover"},
+  {name:"Tenzan 52 Midtown",tier:"T4 [1-3)",daily_avg:2.8,l30d:84,cs_owner:"Terrence Charles",providers:"DoorDash, Sauce"},
+  {name:"Bigoi Venezia",tier:"T4 [1-3)",daily_avg:2.7,l30d:78,cs_owner:"Jim Bayraktar",providers:"DoorDash, Sauce, Caviar, SpotOn"},
+  {name:"Grill Time Express",tier:"T4 [1-3)",daily_avg:2.6,l30d:80,cs_owner:"Mariana Fonseca",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Luna Pasta E Dolci",tier:"T4 [1-3)",daily_avg:2.6,l30d:81,cs_owner:"Tomas Sarmiento",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"Antonios Pizza Hollywood",tier:"T4 [1-3)",daily_avg:2.5,l30d:74,cs_owner:"Anthony Castagnaro",providers:"Slice, DoorDash, Sauce"},
+  {name:"New Tasty Wok",tier:"T4 [1-3)",daily_avg:2.5,l30d:78,cs_owner:"Mariana Fonseca",providers:"UberEats, DoorDash, Sauce, Postmates, Caviar, Direct Order"},
+  {name:"Di Fara Pizza - Ave J",tier:"T4 [1-3)",daily_avg:2.5,l30d:73,cs_owner:"Jim Bayraktar",providers:"Sauce, Order Clover"},
+  {name:"Deli-Boy Subs",tier:"T4 [1-3)",daily_avg:2.5,l30d:75,cs_owner:"Anthony Castagnaro",providers:"Sauce, Direct Order"},
+  {name:"Way Of Life",tier:"T4 [1-3)",daily_avg:2.3,l30d:72,cs_owner:"Brian Kessler",providers:"Grubhub, DoorDash, Seamless, Sauce, Caviar, Toast Local"},
+  {name:"The Hummus House",tier:"T4 [1-3)",daily_avg:2.2,l30d:65,cs_owner:"Dana Blau",providers:"Sauce, Order Clover"},
+  {name:"Wilton Wings And Pizza (Original Location)",tier:"T4 [1-3)",daily_avg:2.2,l30d:67,cs_owner:"Anthony Castagnaro",providers:"(none found)"},
+  {name:"Blondies Sports",tier:"T4 [1-3)",daily_avg:2.2,l30d:68,cs_owner:"Tomas Sarmiento",providers:"DoorDash, Sauce, ChowNow"},
+  {name:"Pizza Piez - Deerfield",tier:"T4 [1-3)",daily_avg:2.2,l30d:64,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce"},
+  {name:"Grados Pizza",tier:"T4 [1-3)",daily_avg:2.2,l30d:62,cs_owner:"Jim Bayraktar",providers:"UberEats, Slice, DoorDash, Sauce, Postmates, Direct Order"},
+  {name:"Cancun Grill Hialeah",tier:"T4 [1-3)",daily_avg:2.1,l30d:62,cs_owner:"Mariana Fonseca",providers:"DoorDash, Sauce, Foodhub"},
+  {name:"Taco Mahal",tier:"T4 [1-3)",daily_avg:2.1,l30d:60,cs_owner:"Brian Kessler",providers:"DoorDash, Sauce"},
+  {name:"Royal Palm Grill",tier:"T4 [1-3)",daily_avg:2.0,l30d:59,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"7tyone Restaurant And Coffee Bar",tier:"T4 [1-3)",daily_avg:2.0,l30d:60,cs_owner:"Tomas Sarmiento",providers:"DoorDash, Sauce"},
+  {name:"Cuenellis Rotisserie Chicken And Grill Riverview",tier:"T4 [1-3)",daily_avg:2.0,l30d:62,cs_owner:"Tomas Sarmiento",providers:"DoorDash, Sauce, Order Clover, Direct Order"},
+  {name:"Turnpike Burgers Grill",tier:"T4 [1-3)",daily_avg:1.9,l30d:61,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, ActiveMenus, Order Clover, Direct Order"},
+  {name:"Bissli Grill",tier:"T4 [1-3)",daily_avg:1.9,l30d:57,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"WoodOne Ramen",tier:"T4 [1-3)",daily_avg:1.8,l30d:54,cs_owner:"Anthony Castagnaro",providers:"DoorDash, Sauce"},
+  {name:"Tako Sushi sunny isles",tier:"T4 [1-3)",daily_avg:1.8,l30d:53,cs_owner:"Anthony Castagnaro",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"The Flame Diner",tier:"T4 [1-3)",daily_avg:1.8,l30d:55,cs_owner:"Madalyn Rubenstein",providers:"Sauce, ActiveMenus"},
+  {name:"La Perrada Colombiana",tier:"T4 [1-3)",daily_avg:1.7,l30d:49,cs_owner:"Mariana Fonseca",providers:"Sauce, Toast Local, Order Clover"},
+  {name:"Grill Point Queens",tier:"T4 [1-3)",daily_avg:1.6,l30d:50,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Bombay Grill House Brooklyn",tier:"T4 [1-3)",daily_avg:1.6,l30d:46,cs_owner:"Tomas Sarmiento",providers:"DoorDash, Sauce, ActiveMenus"},
+  {name:"Kosher Bagel Cove",tier:"T4 [1-3)",daily_avg:1.5,l30d:48,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Krembo Cafe",tier:"T4 [1-3)",daily_avg:1.5,l30d:53,cs_owner:"Mariana Fonseca",providers:"UberEats, DoorDash, Sauce, Postmates, Order Clover, Direct Order"},
+  {name:"Tri Dim Shanghai (UES)",tier:"T4 [1-3)",daily_avg:1.4,l30d:39,cs_owner:"Jim Bayraktar",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Luciano’s Pizzeria & Baked Goods",tier:"T4 [1-3)",daily_avg:1.4,l30d:44,cs_owner:"Mariana Fonseca",providers:"UberEats, Slice, DoorDash, Sauce, Postmates, SpotOn"},
+  {name:"Diner 24",tier:"T4 [1-3)",daily_avg:1.2,l30d:35,cs_owner:"Brian Kessler",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Three Palms Cuban Cafe",tier:"T4 [1-3)",daily_avg:1.1,l30d:34,cs_owner:"Dana Blau",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Caviar"},
+  {name:"Fialkoffs Kosher Pizza Surfside",tier:"T4 [1-3)",daily_avg:1.1,l30d:35,cs_owner:"Dana Blau",providers:"DoorDash, Sauce, Caviar"},
+  {name:"Al Dente Fresh Pasta Co.",tier:"T4 [1-3)",daily_avg:1.1,l30d:36,cs_owner:"Mariana Fonseca",providers:"Grubhub, DoorDash, Seamless, Sauce"},
+  {name:"Pita Hut Aventura",tier:"T4 [1-3)",daily_avg:1.0,l30d:33,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Thanal Indian Tavern",tier:"T5 (0-1)",daily_avg:0.9,l30d:25,cs_owner:"Brian Kessler",providers:"Grubhub, DoorDash, Seamless, Sauce, Caviar"},
+  {name:"Cecile Bakery Cafe",tier:"T5 (0-1)",daily_avg:0.9,l30d:24,cs_owner:"Anthony Castagnaro",providers:"Grubhub, DoorDash, Seamless, Sauce"},
+  {name:"Pizza By Rocco",tier:"T5 (0-1)",daily_avg:0.8,l30d:21,cs_owner:"Brian Kessler",providers:"UberEats, Slice, Grubhub, DoorDash, Seamless, Postmates, ChowNow"},
+  {name:"American Japa Sushi Millenia",tier:"T5 (0-1)",daily_avg:0.6,l30d:17,cs_owner:"Mariana Fonseca",providers:"DoorDash, Sauce"},
+  {name:"Tokyo Bangkok",tier:"T5 (0-1)",daily_avg:0.6,l30d:18,cs_owner:"Dana Blau",providers:"Grubhub, DoorDash, Sauce, Caviar, FromTheRestaurant, Direct Order"},
+  {name:"Slicy Pizza",tier:"T5 (0-1)",daily_avg:0.6,l30d:19,cs_owner:"Mariana Fonseca",providers:"(none found)"},
+  {name:"Frontagers Pizza Company",tier:"T5 (0-1)",daily_avg:0.5,l30d:14,cs_owner:"Anthony Castagnaro",providers:"(none found)"},
+  {name:"Don Burrito",tier:"T5 (0-1)",daily_avg:0.4,l30d:18,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Ceparanos New York Style Pizza",tier:"T5 (0-1)",daily_avg:0.4,l30d:12,cs_owner:"Dana Blau",providers:"DoorDash, Sauce"},
+  {name:"Pelicana Chicken - MD Rockville",tier:"T5 (0-1)",daily_avg:0.4,l30d:12,cs_owner:"Noy Shavit",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates"},
+  {name:"Bella Roma Pizza",tier:"T5 (0-1)",daily_avg:0.4,l30d:11,cs_owner:"Mariana Fonseca",providers:"UberEats, Slice, DoorDash, Sauce, Postmates, Toast Local, Direct Order"},
+  {name:"Casa Cava Monticello",tier:"T5 (0-1)",daily_avg:0.3,l30d:8,cs_owner:"Noy Shavit",providers:"UberEats, DoorDash, Sauce, Postmates"},
+  {name:"Seva Indian Cuisine",tier:"T5 (0-1)",daily_avg:0.3,l30d:10,cs_owner:"Madalyn Rubenstein",providers:"Grubhub, DoorDash, Seamless, Sauce, ChowNow, Caviar, Toast Local"},
+  {name:"Piccola Pizzeria 2",tier:"T5 (0-1)",daily_avg:0.2,l30d:8,cs_owner:"Tomas Sarmiento",providers:"UberEats, Slice, Grubhub, DoorDash, Seamless, Sauce, Postmates, Toast Local, Direct Order"},
+  {name:"Wok On The Beach",tier:"T5 (0-1)",daily_avg:0.2,l30d:6,cs_owner:"no info",providers:"DoorDash, Sauce"},
+  {name:"Crabbae - Kenilworth",tier:"T5 (0-1)",daily_avg:0.1,l30d:4,cs_owner:"Brian Kessler",providers:"Grubhub, Seamless, Sauce, Menufy, Direct Order"},
+  {name:"Dak Korean Fried Chicken",tier:"T5 (0-1)",daily_avg:0.1,l30d:4,cs_owner:"Anthony Castagnaro",providers:"UberEats, Grubhub, DoorDash, Seamless, Sauce, Postmates, Direct Order"},
+  {name:"American Japa Sushi Kissimmee",tier:"T5 (0-1)",daily_avg:0.1,l30d:3,cs_owner:"Mariana Fonseca",providers:"UberEats, DoorDash, Sauce, Postmates"},
+  {name:"EZ Eats Afro Soul Food",tier:"T5 (0-1)",daily_avg:0.0,l30d:1,cs_owner:"Mariana Fonseca",providers:"UberEats, Square, Sauce, Postmates"},
+  {name:"Wogies Bar and Grill - Katonah",tier:"T5 (0-1)",daily_avg:0.0,l30d:1,cs_owner:"Brian Kessler",providers:"DoorDash, Toast Local"},
+];
+
+// -- Tier bar chart --
+new Chart(document.getElementById('tierChart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: ['T1 [10+)', 'T2 [5-10)', 'T3 [3-5)', 'T4 [1-3)', 'T5 (0-1)'],
+    datasets: [
+      { label: 'Exclusive', data: [44, 60, 39, 65, 53], backgroundColor: '#4361ee', borderRadius: 4 },
+      { label: 'Non-Exclusive', data: [116, 199, 199, 456, 359], backgroundColor: '#e9ecef', borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      tooltip: {
+        callbacks: {
+          afterBody: (items) => {
+            const totals = [160, 259, 238, 521, 412];
+            const excl = [44, 60, 39, 65, 53];
+            const idx = items[0].dataIndex;
+            return `${(100 * excl[idx] / totals[idx]).toFixed(1)}% exclusive`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { stacked: true },
+      y: { stacked: true, title: { display: true, text: 'Locations' } }
+    }
+  }
+});
+
+// -- Table rendering --
+function renderProviders(str) {
+  if (str === '(none found)') return '<span class="provider-tag none">none found</span>';
+  return str.split(', ').map(p => {
+    const cls = p === 'Sauce' ? 'sauce' : majorProviders.includes(p) ? 'major' : '';
+    return `<span class="provider-tag ${cls}">${p}</span>`;
+  }).join('');
+}
+
+function renderTable(tableId, data, searchId, countId) {
+  const tbody = document.querySelector(`#${tableId} tbody`);
+  const searchEl = document.getElementById(searchId);
+  const countEl = document.getElementById(countId);
+  let sortCol = 'daily_avg', sortDir = -1;
+
+  function render(filter) {
+    const q = (filter || '').toLowerCase();
+    let filtered = data;
+    if (q) {
+      filtered = data.filter(r =>
+        r.name.toLowerCase().includes(q) ||
+        r.cs_owner.toLowerCase().includes(q) ||
+        r.providers.toLowerCase().includes(q) ||
+        r.tier.toLowerCase().includes(q)
+      );
+    }
+    filtered.sort((a, b) => {
+      const va = a[sortCol], vb = b[sortCol];
+      if (typeof va === 'number') return (va - vb) * sortDir;
+      return String(va).localeCompare(String(vb)) * sortDir;
+    });
+    countEl.textContent = `Showing ${filtered.length} of ${data.length} locations`;
+    tbody.innerHTML = filtered.map(r => `<tr>
+      <td><strong>${r.name}</strong></td>
+      <td>${r.tier}</td>
+      <td>${r.daily_avg}</td>
+      <td>${r.l30d.toLocaleString()}</td>
+      <td>${r.cs_owner}</td>
+      <td class="providers-cell">${renderProviders(r.providers)}</td>
+    </tr>`).join('');
+  }
+
+  searchEl.addEventListener('input', () => render(searchEl.value));
+
+  document.querySelectorAll(`#${tableId} th`).forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (sortCol === col) sortDir *= -1;
+      else { sortCol = col; sortDir = th.dataset.type === 'num' ? -1 : 1; }
+      document.querySelectorAll(`#${tableId} th`).forEach(t => t.classList.remove('sorted'));
+      th.classList.add('sorted');
+      render(searchEl.value);
+    });
+  });
+
+  render('');
+}
+
+renderTable('tableT1', t1Data, 'searchT1', 'countT1');
+renderTable('tableT2', t2Data, 'searchT2', 'countT2');
+</script>
+</body>
+</html>
