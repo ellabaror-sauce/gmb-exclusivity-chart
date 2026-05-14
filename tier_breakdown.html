@@ -46,16 +46,6 @@
 </style>
 </head>
 <body>
-<div id="auth-gate" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f9fa;z-index:9999;display:flex;align-items:center;justify-content:center;">
-  <div style="background:#fff;padding:40px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.12);text-align:center;max-width:340px;width:90%;">
-    <h2 style="margin:0 0 8px;color:#1a1a2e;font-size:20px;">GMB Exclusivity Dashboard</h2>
-    <p style="color:#6c757d;font-size:13px;margin:0 0 20px;">Enter password to continue</p>
-    <input id="auth-pw" type="password" placeholder="Password" style="width:100%;padding:10px 12px;border:1px solid #dee2e6;border-radius:6px;font-size:14px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')document.getElementById('auth-btn').click()">
-    <button id="auth-btn" onclick="if(document.getElementById('auth-pw').value==='sauce_3bis45'){document.getElementById('auth-gate').remove();sessionStorage.setItem('gmb-auth','1')}else{this.previousElementSibling.style.borderColor='#dc3545';this.nextElementSibling.style.display='block'}" style="margin-top:12px;width:100%;padding:10px;background:#1a1a2e;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">Enter</button>
-    <p style="color:#dc3545;font-size:12px;margin-top:8px;display:none;">Incorrect password</p>
-  </div>
-</div>
-<script>if(sessionStorage.getItem('gmb-auth')==='1')document.getElementById('auth-gate').remove();</script>
 <div class="container">
   <a class="back" href="index.html">&larr; Back to Trend Chart</a>
   <h1 style="margin-top:12px">GMB Exclusivity by Tier</h1>
@@ -87,6 +77,39 @@
   <div class="chart-wrapper">
     <div class="chart-title">Exclusivity Rate by Tier</div>
     <canvas id="tierChart"></canvas>
+  </div>
+
+  <!-- Provider Breakdown -->
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <span class="section-title">Top Competitors on GMB</span>
+        <span class="badge" style="background:#fff3e0;color:#e65100;">Non-Sauce/Direct Order providers</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:320px;">
+        <canvas id="providerChart" style="max-height:380px;"></canvas>
+      </div>
+      <div style="flex:1;min-width:320px;">
+        <table id="providerTable" style="font-size:13px;">
+          <thead>
+            <tr>
+              <th style="cursor:default">Provider</th>
+              <th style="cursor:default;text-align:center">Total</th>
+              <th style="cursor:default;text-align:center">T1</th>
+              <th style="cursor:default;text-align:center">T2</th>
+              <th style="cursor:default;text-align:center">T3</th>
+            </tr>
+          </thead>
+          <tbody id="providerTableBody"></tbody>
+        </table>
+        <div class="note" style="margin-top:8px;">
+          Counts how many non-exclusive locations list each provider on their GMB.<br>
+          42 locations had no providers detected during scrape ("none found").
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Non-Exclusive T1 Table -->
@@ -496,6 +519,59 @@ new Chart(document.getElementById('tierChart').getContext('2d'), {
     }
   }
 });
+
+// -- Provider breakdown --
+const ignoreProviders = new Set(['Sauce', 'Direct Order']);
+const allData = t1Data.concat(t2Data);
+const provCounts = {};
+const provByTier = {};
+['T1','T2','T3','T4','T5'].forEach(t => provByTier[t] = {});
+
+allData.forEach(r => {
+  if (r.providers === '(none found)') return;
+  const provs = r.providers.split(', ').filter(p => !ignoreProviders.has(p));
+  if (!provs.length) return;
+  const tk = r.tier.split(' ')[0];
+  provs.forEach(p => {
+    provCounts[p] = (provCounts[p] || 0) + 1;
+    provByTier[tk][p] = (provByTier[tk][p] || 0) + 1;
+  });
+});
+
+const sorted = Object.entries(provCounts).sort((a,b) => b[1] - a[1]);
+const top12 = sorted.slice(0, 12);
+
+new Chart(document.getElementById('providerChart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: top12.map(e => e[0]),
+    datasets: [
+      { label: 'T1', data: top12.map(e => provByTier['T1'][e[0]] || 0), backgroundColor: '#1565c0' },
+      { label: 'T2', data: top12.map(e => provByTier['T2'][e[0]] || 0), backgroundColor: '#4361ee' },
+      { label: 'T3', data: top12.map(e => provByTier['T3'][e[0]] || 0), backgroundColor: '#7c4dff' },
+      { label: 'T4+T5', data: top12.map(e => (provByTier['T4'][e[0]] || 0) + (provByTier['T5'][e[0]] || 0)), backgroundColor: '#e0e0e0' },
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: { legend: { position: 'bottom' } },
+    scales: {
+      x: { stacked: true, title: { display: true, text: 'Locations' } },
+      y: { stacked: true }
+    }
+  }
+});
+
+document.getElementById('providerTableBody').innerHTML = sorted.map(([p, c]) =>
+  `<tr>
+    <td><span class="provider-tag ${majorProviders.includes(p) ? 'major' : ''}">${p}</span></td>
+    <td style="text-align:center;font-weight:600">${c}</td>
+    <td style="text-align:center">${provByTier['T1'][p] || 0}</td>
+    <td style="text-align:center">${provByTier['T2'][p] || 0}</td>
+    <td style="text-align:center">${provByTier['T3'][p] || 0}</td>
+  </tr>`
+).join('');
 
 // -- Table rendering --
 function renderProviders(str) {
