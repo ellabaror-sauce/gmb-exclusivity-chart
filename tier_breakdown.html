@@ -46,6 +46,16 @@
 </style>
 </head>
 <body>
+<div id="auth-gate" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f9fa;z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#fff;padding:40px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.12);text-align:center;max-width:340px;width:90%;">
+    <h2 style="margin:0 0 8px;color:#1a1a2e;font-size:20px;">GMB Exclusivity Dashboard</h2>
+    <p style="color:#6c757d;font-size:13px;margin:0 0 20px;">Enter password to continue</p>
+    <input id="auth-pw" type="password" placeholder="Password" style="width:100%;padding:10px 12px;border:1px solid #dee2e6;border-radius:6px;font-size:14px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')document.getElementById('auth-btn').click()">
+    <button id="auth-btn" onclick="if(document.getElementById('auth-pw').value==='sauce_3bis45'){document.getElementById('auth-gate').remove();sessionStorage.setItem('gmb-auth','1')}else{this.previousElementSibling.style.borderColor='#dc3545';this.nextElementSibling.style.display='block'}" style="margin-top:12px;width:100%;padding:10px;background:#1a1a2e;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">Enter</button>
+    <p style="color:#dc3545;font-size:12px;margin-top:8px;display:none;">Incorrect password</p>
+  </div>
+</div>
+<script>if(sessionStorage.getItem('gmb-auth')==='1')document.getElementById('auth-gate').remove();</script>
 <div class="container">
   <a class="back" href="index.html">&larr; Back to Trend Chart</a>
   <h1 style="margin-top:12px">GMB Exclusivity by Tier</h1>
@@ -173,6 +183,47 @@
       </table>
     </div>
     <div class="count-label" id="countT2"></div>
+  </div>
+
+  <!-- Exclusive vs Non-Exclusive Performance Comparison -->
+  <h2 style="color:#1a1a2e;font-size:20px;margin:32px 0 4px;">Google Traffic Performance: Exclusive vs Non-Exclusive</h2>
+  <p class="subtitle">Menu visits and orders from Google search &amp; Maps traffic &middot; Weekly from May 2025</p>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Avg Menu Visits / Loc / Week</div>
+      <div id="perfStatVisits" class="stat-value" style="color:#4361ee">--</div>
+      <div id="perfStatVisitsDetail" class="stat-detail"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Orders / Loc / Week</div>
+      <div id="perfStatOrders" class="stat-value" style="color:#2e7d32">--</div>
+      <div id="perfStatOrdersDetail" class="stat-detail"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Conversion Rate</div>
+      <div id="perfStatConv" class="stat-value" style="color:#e65100">--</div>
+      <div id="perfStatConvDetail" class="stat-detail"></div>
+    </div>
+  </div>
+
+  <div class="chart-wrapper">
+    <div class="chart-title">Avg Menu Visits per Location (Weekly)</div>
+    <canvas id="perfVisitsChart" style="max-height:340px;"></canvas>
+  </div>
+
+  <div class="chart-wrapper">
+    <div class="chart-title">Avg Orders per Location (Weekly)</div>
+    <canvas id="perfOrdersChart" style="max-height:340px;"></canvas>
+  </div>
+
+  <div class="chart-wrapper">
+    <div class="chart-title">Conversion Rate: Menu Visits &rarr; Orders (Weekly)</div>
+    <canvas id="perfConvChart" style="max-height:340px;"></canvas>
+    <div class="note">
+      Source: Google Analytics data from <code>ga_sf_daily_local_wo_profit</code> filtered to Google traffic (organic, Maps, local)<br>
+      Joined with GMB exclusivity status per location &middot; Last full week: May 4, 2026 &middot; Week of May 11 excluded (partial)
+    </div>
   </div>
 
   <div class="note">
@@ -688,6 +739,138 @@ function renderTable(tableId, data, searchId, countId) {
 
 renderTable('tableT1', t1Data, 'searchT1', 'countT1');
 renderTable('tableT2', t2Data, 'searchT2', 'countT2');
+
+// -- Performance: Exclusive vs Non-Exclusive --
+const perfData = [
+  {w:'2025-04-28',e:{v:21.6,o:6.1,c:28.4},n:{v:10.1,o:2.3,c:22.9}},
+  {w:'2025-05-05',e:{v:36.0,o:9.3,c:25.9},n:{v:16.8,o:3.7,c:22.2}},
+  {w:'2025-05-12',e:{v:33.3,o:8.8,c:26.3},n:{v:16.1,o:3.6,c:22.5}},
+  {w:'2025-05-19',e:{v:34.4,o:8.8,c:25.6},n:{v:15.5,o:3.4,c:21.7}},
+  {w:'2025-05-26',e:{v:33.3,o:9.0,c:26.9},n:{v:15.3,o:3.3,c:21.8}},
+  {w:'2025-06-02',e:{v:33.1,o:9.0,c:27.2},n:{v:14.9,o:3.3,c:22.0}},
+  {w:'2025-06-09',e:{v:35.1,o:9.4,c:26.7},n:{v:15.6,o:3.5,c:22.6}},
+  {w:'2025-06-16',e:{v:36.0,o:9.5,c:26.4},n:{v:14.9,o:3.3,c:22.0}},
+  {w:'2025-06-23',e:{v:35.1,o:9.5,c:27.0},n:{v:15.6,o:3.6,c:22.9}},
+  {w:'2025-06-30',e:{v:32.0,o:8.1,c:25.4},n:{v:14.4,o:3.1,c:21.8}},
+  {w:'2025-07-07',e:{v:32.7,o:8.7,c:26.6},n:{v:14.9,o:3.2,c:21.7}},
+  {w:'2025-07-14',e:{v:33.9,o:8.8,c:26.0},n:{v:15.2,o:3.3,c:21.7}},
+  {w:'2025-07-21',e:{v:34.4,o:8.8,c:25.5},n:{v:15.4,o:3.2,c:21.1}},
+  {w:'2025-07-28',e:{v:37.3,o:9.0,c:24.0},n:{v:15.6,o:3.1,c:20.1}},
+  {w:'2025-08-04',e:{v:34.6,o:9.0,c:26.0},n:{v:15.1,o:3.1,c:20.6}},
+  {w:'2025-08-11',e:{v:34.3,o:8.7,c:25.5},n:{v:14.8,o:3.1,c:21.0}},
+  {w:'2025-08-18',e:{v:34.8,o:8.8,c:25.3},n:{v:14.4,o:3.1,c:21.3}},
+  {w:'2025-08-25',e:{v:34.1,o:8.8,c:25.8},n:{v:14.5,o:3.2,c:22.0}},
+  {w:'2025-09-01',e:{v:34.2,o:9.2,c:26.8},n:{v:14.4,o:3.2,c:22.0}},
+  {w:'2025-09-08',e:{v:34.8,o:9.1,c:26.2},n:{v:13.7,o:3.0,c:21.9}},
+  {w:'2025-09-15',e:{v:34.5,o:9.6,c:27.9},n:{v:13.6,o:3.2,c:23.5}},
+  {w:'2025-09-22',e:{v:32.9,o:8.5,c:25.9},n:{v:13.0,o:2.8,c:21.8}},
+  {w:'2025-09-29',e:{v:34.8,o:8.9,c:25.6},n:{v:13.2,o:3.0,c:22.6}},
+  {w:'2025-10-06',e:{v:34.9,o:8.9,c:25.4},n:{v:13.6,o:3.0,c:22.2}},
+  {w:'2025-10-13',e:{v:34.2,o:8.8,c:25.7},n:{v:13.4,o:3.0,c:22.2}},
+  {w:'2025-10-20',e:{v:35.7,o:9.0,c:25.1},n:{v:13.9,o:3.0,c:21.5}},
+  {w:'2025-10-27',e:{v:38.2,o:9.8,c:25.7},n:{v:13.4,o:3.1,c:23.2}},
+  {w:'2025-11-03',e:{v:40.0,o:9.7,c:24.2},n:{v:13.2,o:3.0,c:22.6}},
+  {w:'2025-11-10',e:{v:38.2,o:10.1,c:26.5},n:{v:14.2,o:3.1,c:22.1}},
+  {w:'2025-11-17',e:{v:36.8,o:9.5,c:25.7},n:{v:14.8,o:3.1,c:20.9}},
+  {w:'2025-11-24',e:{v:31.9,o:7.7,c:24.2},n:{v:11.6,o:2.6,c:22.3}},
+  {w:'2025-12-01',e:{v:31.9,o:9.7,c:30.3},n:{v:11.0,o:2.9,c:26.0}},
+  {w:'2025-12-08',e:{v:34.9,o:10.3,c:29.4},n:{v:11.3,o:2.9,c:25.8}},
+  {w:'2025-12-15',e:{v:35.9,o:10.1,c:28.0},n:{v:11.7,o:2.8,c:23.6}},
+  {w:'2025-12-22',e:{v:31.7,o:7.0,c:22.1},n:{v:11.1,o:2.3,c:20.9}},
+  {w:'2025-12-29',e:{v:37.7,o:9.2,c:24.5},n:{v:12.6,o:2.6,c:20.8}},
+  {w:'2026-01-05',e:{v:33.4,o:9.5,c:28.5},n:{v:11.3,o:2.7,c:23.9}},
+  {w:'2026-01-12',e:{v:34.4,o:9.5,c:27.7},n:{v:11.4,o:2.7,c:24.0}},
+  {w:'2026-01-19',e:{v:32.6,o:8.3,c:25.5},n:{v:10.6,o:2.5,c:23.3}},
+  {w:'2026-01-26',e:{v:36.0,o:9.4,c:26.1},n:{v:11.4,o:2.7,c:23.4}},
+  {w:'2026-02-02',e:{v:35.5,o:9.3,c:26.1},n:{v:12.1,o:2.8,c:23.3}},
+  {w:'2026-02-09',e:{v:36.2,o:9.5,c:26.2},n:{v:11.4,o:2.8,c:24.5}},
+  {w:'2026-02-16',e:{v:34.7,o:9.5,c:27.5},n:{v:11.2,o:2.6,c:23.4}},
+  {w:'2026-02-23',e:{v:33.5,o:8.6,c:25.7},n:{v:10.8,o:2.5,c:22.8}},
+  {w:'2026-03-02',e:{v:31.2,o:8.3,c:26.7},n:{v:10.3,o:2.5,c:24.4}},
+  {w:'2026-03-09',e:{v:36.1,o:10.0,c:27.8},n:{v:11.0,o:2.8,c:25.3}},
+  {w:'2026-03-16',e:{v:35.8,o:9.3,c:25.8},n:{v:11.4,o:2.6,c:23.0}},
+  {w:'2026-03-23',e:{v:36.2,o:9.8,c:27.0},n:{v:11.4,o:2.9,c:25.6}},
+  {w:'2026-03-30',e:{v:36.0,o:8.7,c:24.2},n:{v:10.5,o:2.5,c:23.7}},
+  {w:'2026-04-06',e:{v:30.5,o:7.7,c:25.1},n:{v:9.2,o:2.0,c:22.2}},
+  {w:'2026-04-13',e:{v:37.0,o:10.0,c:26.9},n:{v:10.8,o:2.7,c:25.1}},
+  {w:'2026-04-20',e:{v:34.9,o:9.2,c:26.5},n:{v:11.1,o:2.7,c:24.0}},
+  {w:'2026-04-27',e:{v:36.0,o:9.8,c:27.1},n:{v:10.9,o:2.6,c:23.8}},
+  {w:'2026-05-04',e:{v:38.7,o:10.4,c:26.9},n:{v:11.6,o:2.7,c:23.0}},
+];
+
+const perfLabels = perfData.map(d => {
+  const dt = new Date(d.w + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+});
+
+// Compute averages (skip first week Apr 28 which had lower counts)
+const fullWeeks = perfData.slice(1);
+const avgEV = (fullWeeks.reduce((s,d) => s + d.e.v, 0) / fullWeeks.length).toFixed(1);
+const avgNV = (fullWeeks.reduce((s,d) => s + d.n.v, 0) / fullWeeks.length).toFixed(1);
+const avgEO = (fullWeeks.reduce((s,d) => s + d.e.o, 0) / fullWeeks.length).toFixed(1);
+const avgNO = (fullWeeks.reduce((s,d) => s + d.n.o, 0) / fullWeeks.length).toFixed(1);
+const avgEC = (fullWeeks.reduce((s,d) => s + d.e.c, 0) / fullWeeks.length).toFixed(1);
+const avgNC = (fullWeeks.reduce((s,d) => s + d.n.c, 0) / fullWeeks.length).toFixed(1);
+
+document.getElementById('perfStatVisits').textContent = `${avgEV} vs ${avgNV}`;
+document.getElementById('perfStatVisitsDetail').textContent = `Exclusive ${(avgEV / avgNV).toFixed(1)}x higher`;
+document.getElementById('perfStatOrders').textContent = `${avgEO} vs ${avgNO}`;
+document.getElementById('perfStatOrdersDetail').textContent = `Exclusive ${(avgEO / avgNO).toFixed(1)}x higher`;
+document.getElementById('perfStatConv').textContent = `${avgEC}% vs ${avgNC}%`;
+document.getElementById('perfStatConvDetail').textContent = `+${(avgEC - avgNC).toFixed(1)}pp for exclusive`;
+
+function perfChart(canvasId, eData, nData, yLabel, suffix) {
+  new Chart(document.getElementById(canvasId).getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: perfLabels,
+      datasets: [
+        {
+          label: 'Exclusive',
+          data: eData,
+          borderColor: '#4361ee',
+          backgroundColor: 'rgba(67,97,238,0.08)',
+          fill: false,
+          tension: 0.3,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2.5,
+        },
+        {
+          label: 'Non-Exclusive',
+          data: nData,
+          borderColor: '#e65100',
+          backgroundColor: 'rgba(230,81,0,0.08)',
+          fill: false,
+          tension: 0.3,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2.5,
+          borderDash: [6, 3],
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: (item) => `${item.dataset.label}: ${item.raw}${suffix}`
+          }
+        }
+      },
+      scales: {
+        y: { beginAtZero: false, title: { display: true, text: yLabel } },
+        x: { ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: 14 } }
+      }
+    }
+  });
+}
+
+perfChart('perfVisitsChart', perfData.map(d => d.e.v), perfData.map(d => d.n.v), 'Avg Menu Visits / Location', '');
+perfChart('perfOrdersChart', perfData.map(d => d.e.o), perfData.map(d => d.n.o), 'Avg Orders / Location', '');
+perfChart('perfConvChart', perfData.map(d => d.e.c), perfData.map(d => d.n.c), 'Conversion Rate (%)', '%');
 </script>
 </body>
 </html>
