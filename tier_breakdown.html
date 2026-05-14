@@ -112,6 +112,13 @@
     </div>
   </div>
 
+  <!-- Provider Count Distribution -->
+  <div class="chart-wrapper">
+    <div class="chart-title">How Many External Providers Per Location?</div>
+    <p style="color:#6c757d;font-size:13px;margin:0 0 16px;">Distribution of non-Sauce/Direct Order provider count across 305 non-exclusive locations</p>
+    <canvas id="distChart" style="max-height:320px;"></canvas>
+  </div>
+
   <!-- Non-Exclusive T1 Table -->
   <div class="section">
     <div class="section-header">
@@ -572,6 +579,46 @@ document.getElementById('providerTableBody').innerHTML = sorted.map(([p, c]) =>
     <td style="text-align:center">${provByTier['T3'][p] || 0}</td>
   </tr>`
 ).join('');
+
+// -- Provider count distribution --
+const distCounts = {};
+allData.forEach(r => {
+  if (r.providers === '(none found)') { distCounts[0] = (distCounts[0] || 0) + 1; return; }
+  const provs = r.providers.split(', ').filter(p => !ignoreProviders.has(p));
+  if (!provs.length) return;
+  const n = provs.length;
+  distCounts[n] = (distCounts[n] || 0) + 1;
+});
+const distKeys = Object.keys(distCounts).map(Number).sort((a,b) => a - b);
+const distTotal = distKeys.reduce((s, k) => s + distCounts[k], 0);
+
+new Chart(document.getElementById('distChart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: distKeys.map(k => k === 0 ? 'None found' : k === 1 ? '1 provider' : k + ' providers'),
+    datasets: [{
+      label: 'Locations',
+      data: distKeys.map(k => distCounts[k]),
+      backgroundColor: distKeys.map(k => k === 0 ? '#9e9e9e' : k <= 2 ? '#4361ee' : k <= 4 ? '#e65100' : '#c62828'),
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (item) => `${item.raw} locations (${(100 * item.raw / distTotal).toFixed(1)}%)`
+        }
+      }
+    },
+    scales: {
+      y: { title: { display: true, text: 'Locations' }, beginAtZero: true },
+      x: {}
+    }
+  }
+});
 
 // -- Table rendering --
 function renderProviders(str) {
